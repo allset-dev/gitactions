@@ -8472,17 +8472,27 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 
 try {
-  // `who-to-greet` input defined in action metadata file
-  const nameToGreet = core.getInput('who-to-greet');
-  console.log(`Hello ${nameToGreet}!`);
-  const time = (new Date()).toTimeString();
-  core.setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2)
-  console.log(`The event payload: ${payload}`);
-} catch (error) {
-  core.setFailed(error.message);
-}
+    const token = core?.getInput?.('token', { required: true });
+    const octokit = github?.getOctokit?.(token);
+    const githubInfo = github?.context?.payload;
+    const { ref = '', pull_request = {} } = githubInfo;
+
+    const branchName = ref?.replace?.('refs/heads/', '') || '';
+    const [repoOwner, repoName] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
+
+    console.log(`repoOwner: ${repoOwner}. repoName: ${repoName}`);
+    console.log(`The event payload: ${JSON.stringify(githubInfo, undefined, 2)}`);
+
+
+    octokit?.pulls?.update?.({
+        owner: repoOwner,
+        repo: repoName,
+        body: `https://logichub.atlassian.net/browse/${branchName}`,
+        pull_number: pull_request.number,
+    });
+  } catch (error) {
+    core.setFailed(error.message);
+  }
 })();
 
 module.exports = __webpack_exports__;
