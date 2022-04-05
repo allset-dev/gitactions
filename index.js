@@ -18,19 +18,25 @@ try {
 
     const branchName = ref?.replace?.('refs/heads/', '') || '';
     const [repoOwner, repoName] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
-    const body = `https://logichub.atlassian.net/browse/${branchName}`;
+    const jiraLink = `https://logichub.atlassian.net/browse/${branchName}`;
+    const pull_number = pull_request.number;
 
     console.log(`token: ${token}`)
     console.log(`body: ${body}`);
-    console.log(`repoOwner: ${repoOwner}. repoName: ${repoName}`);
     console.log(`The event payload: ${JSON.stringify(githubInfo, undefined, 2)}`);
 
 
-    const octokit = github.GitHub(token);
-    octokit.pulls.update({
-        body: `https://logichub.atlassian.net/browse/${branchName}`,
-        pull_number: pull_request.number,
-    });
+    updatePRBody()
+
+    async function updatePRBody() {
+        const octokit = github.getOctokit(token);
+        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
+            owner: repoOwner,
+            repo: repoName,
+            pull_number,
+            body: jiraLink
+        });
+    }
   } catch (error) {
     core.setFailed(error.message);
   }
