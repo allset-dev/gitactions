@@ -8495,7 +8495,7 @@ async function run (){
 
         console.log(`pull_request: ${pull_request}`)
         console.log(`token: ${token}`)
-        console.log(`body: ${body}`);
+        console.log(`jiraLink: ${jiraLink}`);
         console.log(`The event payload: ${JSON.stringify(githubInfo, undefined, 2)}`);
     
     
