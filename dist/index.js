@@ -40,19 +40,21 @@ async function updatePrDesc() {
 
     const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
-    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${jiraMarkdown}`)
+    const body = jiraMarkdown;
+
+    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
     console.log(`pull_number: ${pull_number}`);
     console.log(`repo: ${repoOwner}, ${repoName}`);
     console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
 
 
-    if(body && repoOwner && repoName && pull_number){
+    if(Boolean(body) && repoOwner && repoName && pull_number){
         const octokit = github.getOctokit(token);
         await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
             owner: repoOwner,
             repo: repoName,
             pull_number,
-            body: jiraMarkdown,
+            body,
         });
     }else{
         if(pull_number){

@@ -23,7 +23,7 @@ export async function updatePrDesc() {
     console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
 
 
-    if(body && repoOwner && repoName && pull_number){
+    if(Boolean(body) && repoOwner && repoName && pull_number){
         const octokit = github.getOctokit(token);
         await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
             owner: repoOwner,
