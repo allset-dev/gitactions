@@ -13,7 +13,7 @@ export async function updatePrDesc() {
     const headBranchName = head?.ref || '';
     const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
 
-    const itemsToCheckForJiraLink = [baseBranchName, headBranchName, commitMessages];
+    const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
 
     const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
