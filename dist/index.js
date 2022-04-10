@@ -8379,10 +8379,12 @@ function getJiraMarkdown(items) {
                 const jiraLink = getJiraLinkFromString({string: matchedItem});
 
                 if(jiraLink) {
-                    if(matchedItem.startsWith('feature-')) {
-                        featureJiras.push(jiraLink)
-                    }else{
-                        bugJiras.push(jiraLink)
+                    if(!featureJiras.includes(jiraLink) && !bugJiras.includes(jiraLink)) {
+                        if(matchedItem.startsWith('feature-')) {
+                            featureJiras.push(jiraLink)
+                        }else{
+                            bugJiras.push(jiraLink)
+                        }
                     }
                 }
             });
