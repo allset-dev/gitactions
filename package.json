@@ -4,7 +4,8 @@
   "description": "githooks for allset webapp",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build index.js --license licenses.txt"
+    "build": "ncc build index.js --license licenses.txt",
+    "pushlish": "npm run build && git add . && git commit -m \"Git actions\" && "
   },
   "repository": {
     "type": "git",
