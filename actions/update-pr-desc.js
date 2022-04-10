@@ -12,19 +12,26 @@ export async function updatePrDesc() {
     const headBranchName = head?.ref || '';
     const bodyArray = [];
 
-    const jiraEpicLink = getJiraLinkFromString({string: headBranchName});
+    const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
 
-    if(jiraEpicLink) {
+    const featureJiras = getFeatureJiras(itemsToCheckForJiraLink);
+    const bugJiras = getBugJiras(itemsToCheckForJiraLink);
+
+    if(featureJiras.length > 0) {
         bodyArray.push('Jira epic link:');
-        bodyArray.push(`\t${jiraEpicLink}`);
+        featureJiras.forEach(featureJira => {
+            bodyArray.push(`- ${featureJira}`);
+        });
+
     }
 
-    const jiraBugLink = getJiraLinkFromString({string: baseBranchName});
-
-    if(jiraBugLink) {
+    if(bugJiras.length > 0) {
         bodyArray.push('Jira story/bug link:');
-        bodyArray.push(`\t${jiraBugLink}`);
+        bugJiras.forEach(bugJira => {
+            bodyArray.push(`- ${bugJira}`);
+        });
     }
+    
 
     const body = bodyArray.join('\n');
 
@@ -49,6 +56,18 @@ export async function updatePrDesc() {
             core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
         }
     }
+}
+
+
+function getFeatureJiras(items) {
+    return items.filter((item) => {
+        const isItemFeatureJiraId = /feature-allset-\d+/.test(item);
+        return isItemFeatureJiraId;
+    }).map(item => getJiraLinkFromString(item));
+}
+
+function getBugJiras(items) {
+    return items.map(item => getJiraLinkFromString(item)).filter(x => x);
 }
 
 function getJiraLinkFromString({string}) {
