@@ -35,25 +35,12 @@ async function updatePrDesc() {
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
     const headBranchName = head?.ref || '';
-    const bodyArray = [];
 
-    const jiraEpicLink = getJiraLinkFromString({string: headBranchName});
+    const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
 
-    if(jiraEpicLink) {
-        bodyArray.push('Jira epic link:');
-        bodyArray.push(`\t${jiraEpicLink}`);
-    }
+    const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
-    const jiraBugLink = getJiraLinkFromString({string: baseBranchName});
-
-    if(jiraBugLink) {
-        bodyArray.push('Jira story/bug link:');
-        bodyArray.push(`\t${jiraBugLink}`);
-    }
-
-    const body = bodyArray.join('\n');
-
-    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
+    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${jiraMarkdown}`)
     console.log(`pull_number: ${pull_number}`);
     console.log(`repo: ${repoOwner}, ${repoName}`);
     console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
@@ -65,7 +52,7 @@ async function updatePrDesc() {
             owner: repoOwner,
             repo: repoName,
             pull_number,
-            body,
+            body: jiraMarkdown,
         });
     }else{
         if(pull_number){
@@ -74,6 +61,52 @@ async function updatePrDesc() {
             core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
         }
     }
+}
+
+
+function getJiraMarkdown(items) {
+    const bodyArray = [];
+    const featureJiras = [];
+    const bugJiras = [];
+
+    items.forEach(item => {
+        const matchedItems = item.match(/(feature-)?allset-\d+/g);
+
+        if(matchedItems) {
+            matchedItems.forEach((matchedItem = '') => {
+                const jiraLink = getJiraLinkFromString({string: matchedItem});
+
+                if(jiraLink) {
+                    if(matchedItem.startsWith('feature-')) {
+                        featureJiras.push(jiraLink)
+                    }else{
+                        bugJiras.push(jiraLink)
+                    }
+                }
+            });
+        }
+    });
+
+    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
+    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
+
+    if(featureJiras.length > 0) {
+        bodyArray.push('Jira epic link:\n');
+        featureJiras.forEach(featureJira => {
+            bodyArray.push(`- ${featureJira}`);
+        });
+        bodyArray.push('\n');
+    }
+
+    if(bugJiras.length > 0) {
+        bodyArray.push('Jira story/bug link:\n');
+        bugJiras.forEach(bugJira => {
+            bodyArray.push(`- ${bugJira}`);
+        });
+        bodyArray.push('\n');
+    }
+    
+    return  bodyArray.join('\n');
 }
 
 function getJiraLinkFromString({string}) {

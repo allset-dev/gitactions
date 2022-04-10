@@ -10,32 +10,12 @@ export async function updatePrDesc() {
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
     const headBranchName = head?.ref || '';
-    const bodyArray = [];
 
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
 
-    const featureJiras = getFeatureJiras(itemsToCheckForJiraLink);
-    const bugJiras = getBugJiras(itemsToCheckForJiraLink);
+    const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
-    if(featureJiras.length > 0) {
-        bodyArray.push('Jira epic link:');
-        featureJiras.forEach(featureJira => {
-            bodyArray.push(`- ${featureJira}`);
-        });
-
-    }
-
-    if(bugJiras.length > 0) {
-        bodyArray.push('Jira story/bug link:');
-        bugJiras.forEach(bugJira => {
-            bodyArray.push(`- ${bugJira}`);
-        });
-    }
-    
-
-    const body = bodyArray.join('\n');
-
-    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
+    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${jiraMarkdown}`)
     console.log(`pull_number: ${pull_number}`);
     console.log(`repo: ${repoOwner}, ${repoName}`);
     console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
@@ -47,7 +27,7 @@ export async function updatePrDesc() {
             owner: repoOwner,
             repo: repoName,
             pull_number,
-            body,
+            body: jiraMarkdown,
         });
     }else{
         if(pull_number){
@@ -59,15 +39,49 @@ export async function updatePrDesc() {
 }
 
 
-function getFeatureJiras(items) {
-    return items.filter((item) => {
-        const isItemFeatureJiraId = /feature-allset-\d+/.test(item);
-        return isItemFeatureJiraId;
-    }).map(item => getJiraLinkFromString(item));
-}
+function getJiraMarkdown(items) {
+    const bodyArray = [];
+    const featureJiras = [];
+    const bugJiras = [];
 
-function getBugJiras(items) {
-    return items.map(item => getJiraLinkFromString(item)).filter(x => x);
+    items.forEach(item => {
+        const matchedItems = item.match(/(feature-)?allset-\d+/g);
+
+        if(matchedItems) {
+            matchedItems.forEach((matchedItem = '') => {
+                const jiraLink = getJiraLinkFromString({string: matchedItem});
+
+                if(jiraLink) {
+                    if(matchedItem.startsWith('feature-')) {
+                        featureJiras.push(jiraLink)
+                    }else{
+                        bugJiras.push(jiraLink)
+                    }
+                }
+            });
+        }
+    });
+
+    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
+    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
+
+    if(featureJiras.length > 0) {
+        bodyArray.push('Jira epic link:\n');
+        featureJiras.forEach(featureJira => {
+            bodyArray.push(`- ${featureJira}`);
+        });
+        bodyArray.push('\n');
+    }
+
+    if(bugJiras.length > 0) {
+        bodyArray.push('Jira story/bug link:\n');
+        bugJiras.forEach(bugJira => {
+            bodyArray.push(`- ${bugJira}`);
+        });
+        bodyArray.push('\n');
+    }
+    
+    return  bodyArray.join('\n');
 }
 
 function getJiraLinkFromString({string}) {
