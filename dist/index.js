@@ -42,6 +42,8 @@ async function updatePrDesc() {
 
     const body = jiraMarkdown;
 
+    console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
+
     if(Boolean(body) && repoOwner && repoName && pull_number){
         const octokit = github.getOctokit(token);
         await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
@@ -57,9 +59,7 @@ async function updatePrDesc() {
             console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
             console.log(`pull_number: ${pull_number}`);
             console.log(`repo: ${repoOwner}, ${repoName}`);
-            console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
 
-            
             core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
         }
     }
