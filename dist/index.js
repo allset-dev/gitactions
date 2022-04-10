@@ -1,127 +1,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 4406:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "checkPrTitle": () => (/* binding */ checkPrTitle)
-/* harmony export */ });
-async function checkPrTitle() {
-
-}
-
-/***/ }),
-
-/***/ 136:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "updatePrDesc": () => (/* binding */ updatePrDesc)
-/* harmony export */ });
-const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
-
-
-async function updatePrDesc() {
-    const token = core.getInput('GITHUB_TOKEN', { required: true });
-
-    const pull_request = github?.context?.payload?.pull_request || {};
-    const { base, head, number: pull_number } = pull_request;
-    const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
-    const baseBranchName = base?.ref || '';
-    const headBranchName = head?.ref || '';
-
-    const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
-
-    const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
-
-    const body = jiraMarkdown;
-
-    console.log(`The commits payload: ${JSON.stringify( github?.event?.commits?.[0]?.message, undefined, 2)}`);
-    console.log(`The head_commit payload: ${JSON.stringify( github?.event?.head_commit?.message, undefined, 2)}`);
-    console.log(`The event payload: ${JSON.stringify( github?.event, undefined, 2)}`);
-    console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
-
-    if(Boolean(body) && repoOwner && repoName && pull_number){
-        const octokit = github.getOctokit(token);
-        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
-            owner: repoOwner,
-            repo: repoName,
-            pull_number,
-            body,
-        });
-    }else{
-        if(pull_number){
-            core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
-        }else{
-            console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
-            console.log(`pull_number: ${pull_number}`);
-            console.log(`repo: ${repoOwner}, ${repoName}`);
-
-            core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
-        }
-    }
-}
-
-
-function getJiraMarkdown(items) {
-    const bodyArray = [];
-    const featureJiras = [];
-    const bugJiras = [];
-
-    items.forEach(item => {
-        const matchedItems = item.match(/(feature-)?allset-\d+/g);
-
-        if(matchedItems) {
-            matchedItems.forEach((matchedItem = '') => {
-                const jiraLink = getJiraLinkFromString({string: matchedItem});
-
-                if(jiraLink) {
-                    if(matchedItem.startsWith('feature-')) {
-                        featureJiras.push(jiraLink)
-                    }else{
-                        bugJiras.push(jiraLink)
-                    }
-                }
-            });
-        }
-    });
-
-    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
-    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
-
-    if(featureJiras.length > 0) {
-        bodyArray.push('Jira epic link:\n');
-        featureJiras.forEach(featureJira => {
-            bodyArray.push(`- ${featureJira}`);
-        });
-        bodyArray.push('\n');
-    }
-
-    if(bugJiras.length > 0) {
-        bodyArray.push('Jira story/bug link:\n');
-        bugJiras.forEach(bugJira => {
-            bodyArray.push(`- ${bugJira}`);
-        });
-        bodyArray.push('\n');
-    }
-    
-    return  bodyArray.join('\n');
-}
-
-function getJiraLinkFromString({string}) {
-    const jiraId = /allset-\d+/.exec(string)?.[0] || '';
-
-    return jiraId ? `https://logichub.atlassian.net/browse/${jiraId}`: '';
-}
-
-/***/ }),
-
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -8420,6 +8299,189 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 4686:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "checkPrTitle": () => (/* binding */ checkPrTitle)
+/* harmony export */ });
+async function checkPrTitle() {
+
+}
+
+/***/ }),
+
+/***/ 7010:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "updatePrDesc": () => (/* binding */ updatePrDesc)
+/* harmony export */ });
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+
+const {getCommitMessages} = __nccwpck_require__(4407);
+
+async function updatePrDesc() {
+    const token = core.getInput('GITHUB_TOKEN', { required: true });
+
+    const pull_request = github?.context?.payload?.pull_request || {};
+    const { base, head, number: pull_number } = pull_request;
+    const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
+    const baseBranchName = base?.ref || '';
+    const headBranchName = head?.ref || '';
+    const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
+
+    console.log(`commitMessages, ${JSON.stringify(commitMessages, undefined, 2)}`);
+
+    const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
+
+    const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
+
+    const body = jiraMarkdown;
+
+    console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
+
+    if(Boolean(body) && repoOwner && repoName && pull_number){
+        const octokit = github.getOctokit(token);
+        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
+            owner: repoOwner,
+            repo: repoName,
+            pull_number,
+            body,
+        });
+    }else{
+        if(pull_number){
+            core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
+        }else{
+            console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
+            console.log(`pull_number: ${pull_number}`);
+            console.log(`repo: ${repoOwner}, ${repoName}`);
+
+            core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
+        }
+    }
+}
+
+
+function getJiraMarkdown(items) {
+    const bodyArray = [];
+    const featureJiras = [];
+    const bugJiras = [];
+
+    items.forEach(item => {
+        const matchedItems = item.match(/(feature-)?allset-\d+/g);
+
+        if(matchedItems) {
+            matchedItems.forEach((matchedItem = '') => {
+                const jiraLink = getJiraLinkFromString({string: matchedItem});
+
+                if(jiraLink) {
+                    if(matchedItem.startsWith('feature-')) {
+                        featureJiras.push(jiraLink)
+                    }else{
+                        bugJiras.push(jiraLink)
+                    }
+                }
+            });
+        }
+    });
+
+    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
+    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
+
+    if(featureJiras.length > 0) {
+        bodyArray.push('Jira epic link:\n');
+        featureJiras.forEach(featureJira => {
+            bodyArray.push(`- ${featureJira}`);
+        });
+        bodyArray.push('\n');
+    }
+
+    if(bugJiras.length > 0) {
+        bodyArray.push('Jira story/bug link:\n');
+        bugJiras.forEach(bugJira => {
+            bodyArray.push(`- ${bugJira}`);
+        });
+        bodyArray.push('\n');
+    }
+    
+    return  bodyArray.join('\n');
+}
+
+function getJiraLinkFromString({string}) {
+    const jiraId = /allset-\d+/.exec(string)?.[0] || '';
+
+    return jiraId ? `https://logichub.atlassian.net/browse/${jiraId}`: '';
+}
+
+/***/ }),
+
+/***/ 4407:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "getCommitMessages": () => (/* binding */ getCommitMessages)
+/* harmony export */ });
+const {graphql} = __nccwpck_require__(8467);
+
+
+async function getCommitMessages(props) {
+    const { repositoryOwner, repositoryName, pullRequestNumber, token } = props;
+
+    const query = `
+    query commitMessages(
+      $repositoryOwner: String!
+      $repositoryName: String!
+      $pullRequestNumber: Int!
+      $numberOfCommits: Int = 100
+    ) {
+      repository(owner: $repositoryOwner, name: $repositoryName) {
+        pullRequest(number: $pullRequestNumber) {
+          commits(last: $numberOfCommits) {
+            edges {
+              node {
+                commit {
+                  message
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `
+    const variables = {
+      baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
+      repositoryOwner,
+      repositoryName,
+      pullRequestNumber,
+      headers: {
+        authorization: `token ${token}`
+      }
+    }
+    
+    const {repository} = await graphql(query, variables);
+
+    let messages = [];
+
+    if (repository.pullRequest) {
+        messages = repository.pullRequest.commits.edges.map((edge) => {
+          return edge.node.commit.message
+        });
+    }
+    
+    return messages;
+}
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -8619,8 +8681,8 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(2186);
 
-const {updatePrDesc} = __nccwpck_require__(136);
-const {checkPrTitle} = __nccwpck_require__(4406);
+const {updatePrDesc} = __nccwpck_require__(7010);
+const {checkPrTitle} = __nccwpck_require__(4686);
 
 function run (){
     try {

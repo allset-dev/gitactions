@@ -4,7 +4,7 @@
   "description": "githooks for allset webapp",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build index.js --license licenses.txt",
+    "build": "ncc build src/index.js --license licenses.txt",
     "publish": "npm run build && git add . && git commit -m \"$MESSAGE\" && git tag -a -m \"$MESSAGE\" $VERSION && git push --follow-tags "
   },
   "repository": {
@@ -21,6 +21,7 @@
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.1",
+    "@octokit/graphql": "^4.8.0",
     "@vercel/ncc": "^0.33.3"
   }
 }

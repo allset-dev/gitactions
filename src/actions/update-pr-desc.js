@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
+const {getCommitMessages} = require('../utils/commit-messsages');
 
 export async function updatePrDesc() {
     const token = core.getInput('GITHUB_TOKEN', { required: true });
@@ -10,6 +11,9 @@ export async function updatePrDesc() {
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
     const headBranchName = head?.ref || '';
+    const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
+
+    console.log(`commitMessages, ${JSON.stringify(commitMessages, undefined, 2)}`);
 
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
 
@@ -17,9 +21,6 @@ export async function updatePrDesc() {
 
     const body = jiraMarkdown;
 
-    console.log(`The commits payload: ${JSON.stringify( github?.event?.commits?.[0]?.message, undefined, 2)}`);
-    console.log(`The head_commit payload: ${JSON.stringify( github?.event?.head_commit?.message, undefined, 2)}`);
-    console.log(`The event payload: ${JSON.stringify( github?.event, undefined, 2)}`);
     console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
 
     if(Boolean(body) && repoOwner && repoName && pull_number){
