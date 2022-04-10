@@ -1,6 +1,71 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 4406:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "checkPrTitle": () => (/* binding */ checkPrTitle)
+/* harmony export */ });
+async function checkPrTitle() {
+
+}
+
+/***/ }),
+
+/***/ 136:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "updatePrDesc": () => (/* binding */ updatePrDesc)
+/* harmony export */ });
+const core = __nccwpck_require__(2186);
+const github = __nccwpck_require__(5438);
+
+
+async function updatePrDesc() {
+    const token = core.getInput('GITHUB_TOKEN', { required: true });
+
+    const githubInfo = github?.context?.payload || {};
+    const { base, pull_request } = githubInfo;
+    const branchName = base?.ref || '';
+
+    const jiraId = /allset-\d+/.exec(branchName)?.[0] || '';
+    const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
+    const jiraLink = jiraId? `https://logichub.atlassian.net/browse/${jiraId}`: '';
+    const pull_number = pull_request?.number || null;
+
+    console.log(`pull_request: ${pull_request}`)
+    console.log(`jiraLink: ${jiraLink}`);
+    console.log(`pull_number: ${pull_number}`);
+    console.log(`repo: ${repoOwner}, ${repoName}`);
+    console.log(`The event payload: ${JSON.stringify(githubInfo, undefined, 2)}`);
+
+
+
+    if(jiraId && repoOwner && repoName && pull_number){
+        const octokit = github.getOctokit(token);
+        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
+            owner: repoOwner,
+            repo: repoName,
+            pull_number,
+            body: jiraLink
+        });
+    }else{
+        if(pull_number){
+            core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
+        }else{
+            core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
+        }
+    }
+}
+
+/***/ }),
+
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -8460,6 +8525,34 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
@@ -8469,43 +8562,29 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
 
-async function run (){
+const {updatePrDesc} = __nccwpck_require__(136);
+const {checkPrTitle} = __nccwpck_require__(4406);
+
+function run (){
     try {
-        const token = core.getInput('token', { required: true });
-        const githubInfo = github?.context?.payload;
-        const { ref = '', pull_request } = githubInfo;
-    
-        if (pull_request === null) {
-            core.setFailed("No pull request found");
-            return;
-        }
-    
-        if (!token) {
-            core.setFailed("TOKEN input is required");
-            return;
-        }
-    
-        const branchName = ref?.replace?.('refs/heads/', '') || '';
-        const [repoOwner, repoName] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
-        const jiraLink = `https://logichub.atlassian.net/browse/${branchName}`;
-        const pull_number = pull_request?.number;
-        const octokit = github.getOctokit(token);
+        const check = core.getInput('CHECK', { required: true });
 
-        console.log(`pull_request: ${pull_request}`)
-        console.log(`token: ${token}`)
-        console.log(`jiraLink: ${jiraLink}`);
-        console.log(`The event payload: ${JSON.stringify(githubInfo, undefined, 2)}`);
-    
-    
-    
-        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
-            owner: repoOwner,
-            repo: repoName,
-            pull_number,
-            body: jiraLink
-        });
+        switch(check){
+            case 'title': {
+                checkPrTitle();
+                break;
+            }
+
+            case 'desc': {
+                updatePrDesc();
+                break;
+            }
+
+            default: {
+                core.setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
+            }
+        }
     } catch (error) {
         core.setFailed(error.message);
     }

@@ -1,9 +1,10 @@
-name: Update Pull Request Description
-description: Easily update a pull requests description
+name: allset-git-actions
+description: AllSet web app's git actions
 
 inputs:
-  token:
-    description: A GitHub access token
+  GITHUB_TOKEN:
+    required: true
+  CHECK:
     required: true
 
 runs:
