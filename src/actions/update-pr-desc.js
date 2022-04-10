@@ -13,9 +13,7 @@ export async function updatePrDesc() {
     const headBranchName = head?.ref || '';
     const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
 
-    console.log(`commitMessages, ${JSON.stringify(commitMessages, undefined, 2)}`);
-
-    const itemsToCheckForJiraLink = [baseBranchName, headBranchName];
+    const itemsToCheckForJiraLink = [baseBranchName, headBranchName, commitMessages];
 
     const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
@@ -67,9 +65,6 @@ function getJiraMarkdown(items) {
             });
         }
     });
-
-    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
-    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
 
     if(featureJiras.length > 0) {
         bodyArray.push('Jira epic link:\n');
