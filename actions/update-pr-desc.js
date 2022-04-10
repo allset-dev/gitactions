@@ -17,6 +17,9 @@ export async function updatePrDesc() {
 
     const body = jiraMarkdown;
 
+    console.log(`The commits payload: ${JSON.stringify( github?.event?.commits?.[0]?.message, undefined, 2)}`);
+    console.log(`The head_commit payload: ${JSON.stringify( github?.event?.head_commit?.message, undefined, 2)}`);
+    console.log(`The event payload: ${JSON.stringify( github?.event, undefined, 2)}`);
     console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
 
     if(Boolean(body) && repoOwner && repoName && pull_number){
