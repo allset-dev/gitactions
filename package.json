@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build index.js --license licenses.txt",
-    "pushlish": "npm run build && git add . && git commit -m \"Git actions\" && "
+    "pushlish": "npm run build && git add . && git commit -m \"Allset git actions\" && git tag -a -m \"Allset git actions\" v1.16 && "
   },
   "repository": {
     "type": "git",
