@@ -15,7 +15,9 @@ export async function updatePrDesc() {
 
     const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
 
-    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${jiraMarkdown}`)
+    const body = jiraMarkdown;
+
+    console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
     console.log(`pull_number: ${pull_number}`);
     console.log(`repo: ${repoOwner}, ${repoName}`);
     console.log(`The event payload: ${JSON.stringify(github?.context?.payload, undefined, 2)}`);
@@ -27,7 +29,7 @@ export async function updatePrDesc() {
             owner: repoOwner,
             repo: repoName,
             pull_number,
-            body: jiraMarkdown,
+            body,
         });
     }else{
         if(pull_number){
