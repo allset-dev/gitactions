@@ -1,2 +1,2 @@
-# githooks
-githooks for allset webapp
+# gitactions
+allset git actions

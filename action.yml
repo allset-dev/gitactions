@@ -1,8 +1,12 @@
 name: allset-git-actions
-description: AllSet web app's git actions
+description: allset git actions
 
 inputs:
   GITHUB_TOKEN:
+    required: true
+  JIRA_HOST_URL:
+    required: true
+  JIRA_PROJECT_NAME:
     required: true
   CHECK:
     required: true

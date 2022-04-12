@@ -1,7 +1,7 @@
 {
-  "name": "githooks",
+  "name": "gitactions",
   "version": "1.0.0",
-  "description": "githooks for allset webapp",
+  "description": "allset git actions",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.js --license licenses.txt",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/allset-web-app/githooks.git"
+    "url": "git+https://github.com/allset-inc/gitactions.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/allset-web-app/githooks/issues"
+    "url": "https://github.com/allset-inc/gitactions/issues"
   },
-  "homepage": "https://github.com/allset-web-app/githooks#readme",
+  "homepage": "https://github.com/allset-inc/gitactions#readme",
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.1",

@@ -2,15 +2,24 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 const {getCommitMessages} = require('../utils/commit-messsages');
+
 const BODY_STRING = {
     EPIC: 'Jira epic link:',
     BUG: 'Jira story/bug link:'
 }
 
-export async function updatePrDesc() {
-    const token = core.getInput('GITHUB_TOKEN', { required: true });
+const token = core.getInput('GITHUB_TOKEN', { required: true });
+const JIRA_HOST_URL = core.getInput('JIRA_HOST_URL', { required: true });
+const JIRA_PROJECT_NAME = core.getInput('JIRA_PROJECT_NAME', { required: true });
 
-    const pull_request = github?.context?.payload?.pull_request || {};
+const JIRA_BROWSE = `${JIRA_HOST_URL}/browse`;
+
+const JIRA_PROJECT_NAME_REGEX = new RegExp(`${JIRA_PROJECT_NAME}-\\d+`,'g');
+const GIT_BRANCH_NAME_REGEX = new RegExp(`(feature-)?${JIRA_PROJECT_NAME_REGEX.source}`,'g');
+const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
+
+export async function updatePrDesc() {
+
     const { base, head, number: pull_number, body = '' } = pull_request;
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
@@ -56,11 +65,11 @@ function getJiraMarkdown(items = [], jiraSection = '') {
     const bugJiras = getJiras(bugJirasSection);
 
     items.forEach(item => {
-        const matchedItems = item.match(/(feature-)?allset-\d+/g);
+        const matchedItems = item.match(GIT_BRANCH_NAME_REGEX);
 
         if(matchedItems) {
             matchedItems.forEach((matchedItem = '') => {
-                const jiraLink = getJiraLinkFromString({string: matchedItem});
+                const jiraLink = getJiraLinkFromJiraId({string: matchedItem});
 
                 if(jiraLink) {
                     if(!featureJiras.includes(jiraLink) && !bugJiras.includes(jiraLink)) {
@@ -94,12 +103,12 @@ function getJiraMarkdown(items = [], jiraSection = '') {
     return  `\n\n${bodyArray.join('')}`;
 }
 
-function getJiraLinkFromString({string}) {
-    const jiraId = /allset-\d+/.exec(string)?.[0] || '';
+function getJiraLinkFromJiraId({string}) {
+    const jiraId = JIRA_PROJECT_NAME_REGEX.exec(string)?.[0] || '';
 
-    return jiraId ? `https://logichub.atlassian.net/browse/${jiraId}`: '';
+    return jiraId ? `${JIRA_BROWSE}/${jiraId}`: '';
 }
 
 function getJiras(string){
-    return string.match(/https:\/\/logichub.atlassian.net\/browse\/allset-\d+/g) || [];
+    return string.match(JIRA_LINK_REGEX) || [];
 }
