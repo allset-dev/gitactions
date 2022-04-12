@@ -8377,7 +8377,7 @@ async function updatePrDesc() {
 
 
 function getJiraMarkdown(items = [], jiraSection = '') {
-    const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.indexOf(BODY_STRING.BUG);
+    const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.split(BODY_STRING.BUG);
     console.log(`featureJirasSection: ${featureJirasSection}`);
     console.log(`bugJirasSection: ${bugJirasSection}`);
 
