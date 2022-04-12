@@ -2,12 +2,17 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 const {getCommitMessages} = require('../utils/commit-messsages');
+const JIRA_SECTION = /(?<=### Jira Link)(.*)(?=###)/;
+const BODY_STRING = {
+    EPIC: '>Jira epic link:',
+    BUG: '>Jira story/bug link:'
+}
 
 export async function updatePrDesc() {
     const token = core.getInput('GITHUB_TOKEN', { required: true });
 
     const pull_request = github?.context?.payload?.pull_request || {};
-    const { base, head, number: pull_number } = pull_request;
+    const { base, head, number: pull_number, body = '' } = pull_request;
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
     const headBranchName = head?.ref || '';
@@ -15,38 +20,42 @@ export async function updatePrDesc() {
 
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
 
-    const jiraMarkdown = getJiraMarkdown(itemsToCheckForJiraLink);
-
-    const body = jiraMarkdown;
+    const updatedBody = body.replace(JIRA_SECTION, (jiraSection) => {
+        return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
+    });
 
     console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
 
-    if(Boolean(body) && repoOwner && repoName && pull_number){
-        const octokit = github.getOctokit(token);
-        await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
-            owner: repoOwner,
-            repo: repoName,
-            pull_number,
-            body,
-        });
-    }else{
-        if(pull_number){
-            core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
+    if(body !== updatedBody) {
+        if(Boolean(body) && repoOwner && repoName && pull_number){
+            const octokit = github.getOctokit(token);
+            await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
+                owner: repoOwner,
+                repo: repoName,
+                pull_number,
+                body: updatedBody,
+            });
         }else{
-            console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
-            console.log(`pull_number: ${pull_number}`);
-            console.log(`repo: ${repoOwner}, ${repoName}`);
-
-            core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
+            if(pull_number){
+                core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
+            }else{
+                console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
+                console.log(`pull_number: ${pull_number}`);
+                console.log(`repo: ${repoOwner}, ${repoName}`);
+    
+                core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
+            }
         }
     }
 }
 
 
-function getJiraMarkdown(items) {
+function getJiraMarkdown(items = [], jiraSection = '') {
+    const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.indexOf(BODY_STRING.BUG);
+
     const bodyArray = [];
-    const featureJiras = [];
-    const bugJiras = [];
+    const featureJiras = getJiras(featureJirasSection)
+    const bugJiras = getJiras(bugJirasSection);
 
     items.forEach(item => {
         const matchedItems = item.match(/(feature-)?allset-\d+/g);
@@ -68,18 +77,18 @@ function getJiraMarkdown(items) {
         }
     });
 
+    bodyArray.push(`${BODY_STRING.EPIC}\n`);
     if(featureJiras.length > 0) {
-        bodyArray.push('Jira epic link:\n');
         featureJiras.forEach(featureJira => {
-            bodyArray.push(`- ${featureJira}`);
+            bodyArray.push(`>- ${featureJira}`);
         });
         bodyArray.push('\n');
     }
 
+    bodyArray.push(`${BODY_STRING.BUG}\n`);
     if(bugJiras.length > 0) {
-        bodyArray.push('Jira story/bug link:\n');
         bugJiras.forEach(bugJira => {
-            bodyArray.push(`- ${bugJira}`);
+            bodyArray.push(`>- ${bugJira}`);
         });
         bodyArray.push('\n');
     }
@@ -91,4 +100,8 @@ function getJiraLinkFromString({string}) {
     const jiraId = /allset-\d+/.exec(string)?.[0] || '';
 
     return jiraId ? `https://logichub.atlassian.net/browse/${jiraId}`: '';
+}
+
+function getJiras(string){
+    string.match(/https:\/\/logichub.atlassian.net\/browse\/allset-\d+/g) || [];
 }
