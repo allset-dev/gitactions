@@ -8340,18 +8340,13 @@ async function updatePrDesc() {
     const headBranchName = head?.ref || '';
     const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
 
-    console.log(`body: ${body}`);
-
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
 
     const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
-        console.log(`jiraSection: ${jiraSection}`);
         return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
     });
 
-    console.log(`body: ${updatedBody} ${body !== updatedBody}`);
     console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
-
     if(body !== updatedBody) {
         if(Boolean(body) && repoOwner && repoName && pull_number){
             const octokit = github.getOctokit(token);
@@ -8378,14 +8373,10 @@ async function updatePrDesc() {
 
 function getJiraMarkdown(items = [], jiraSection = '') {
     const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.split(BODY_STRING.BUG);
-    console.log(`featureJirasSection: ${featureJirasSection}`);
-    console.log(`bugJirasSection: ${bugJirasSection}`);
 
     const bodyArray = [];
     const featureJiras = getJiras(featureJirasSection)
     const bugJiras = getJiras(bugJirasSection);
-    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
-    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
 
     items.forEach(item => {
         const matchedItems = item.match(/(feature-)?allset-\d+/g);
@@ -8423,7 +8414,6 @@ function getJiraMarkdown(items = [], jiraSection = '') {
     }
     bodyArray.push('\n');
 
-    console.log(`bodyArray: ${JSON.stringify(bodyArray, undefined, 2)}`);
     return  `\n\n${bodyArray.join('')}`;
 }
 
