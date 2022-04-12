@@ -8344,7 +8344,7 @@ async function updatePrDesc() {
 
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
 
-    const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/g, (jiraSection) => {
+    const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
         console.log(`jiraSection: ${jiraSection}`);
         return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
     });
