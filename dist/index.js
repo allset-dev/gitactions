@@ -8325,7 +8325,6 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 
 const {getCommitMessages} = __nccwpck_require__(4407);
-const JIRA_SECTION = /(?<=### Jira Link)(.*)(?=###)/;
 const BODY_STRING = {
     EPIC: '>Jira epic link:',
     BUG: '>Jira story/bug link:'
@@ -8341,12 +8340,16 @@ async function updatePrDesc() {
     const headBranchName = head?.ref || '';
     const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
 
+    console.log(`body: ${body}`);
+
     const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
 
-    const updatedBody = body.replace(JIRA_SECTION, (jiraSection) => {
+    const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/g, (jiraSection) => {
+        console.log(`jiraSection: ${jiraSection}`);
         return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
     });
 
+    console.log(`body: ${updatedBody} ${body !== updatedBody}`);
     console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
 
     if(body !== updatedBody) {
@@ -8375,10 +8378,14 @@ async function updatePrDesc() {
 
 function getJiraMarkdown(items = [], jiraSection = '') {
     const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.indexOf(BODY_STRING.BUG);
+    console.log(`featureJirasSection: ${featureJirasSection}`);
+    console.log(`bugJirasSection: ${bugJirasSection}`);
 
     const bodyArray = [];
     const featureJiras = getJiras(featureJirasSection)
     const bugJiras = getJiras(bugJirasSection);
+    console.log(`featureJiras: ${JSON.stringify(featureJiras, undefined, 2)}`);
+    console.log(`bugJiras: ${JSON.stringify(bugJiras, undefined, 2)}`);
 
     items.forEach(item => {
         const matchedItems = item.match(/(feature-)?allset-\d+/g);
