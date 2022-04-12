@@ -8343,6 +8343,7 @@ const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.sou
 
 async function updatePrDesc() {
 
+    const pull_request = github?.context?.payload?.pull_request || {};
     const { base, head, number: pull_number, body = '' } = pull_request;
     const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
     const baseBranchName = base?.ref || '';
