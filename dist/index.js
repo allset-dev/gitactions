@@ -8410,20 +8410,21 @@ function getJiraMarkdown(items = [], jiraSection = '') {
     bodyArray.push(`> ${BODY_STRING.EPIC}\n`);
     if(featureJiras.length > 0) {
         featureJiras.forEach(featureJira => {
-            bodyArray.push(`> - ${featureJira}`);
+            bodyArray.push(`> - ${featureJira}\n`);
         });
-        bodyArray.push('\n');
     }
+    bodyArray.push('\n');
 
     bodyArray.push(`> ${BODY_STRING.BUG}\n`);
     if(bugJiras.length > 0) {
         bugJiras.forEach(bugJira => {
-            bodyArray.push(`> - ${bugJira}`);
+            bodyArray.push(`> - ${bugJira}\n`);
         });
-        bodyArray.push('\n');
     }
-    
-    return  bodyArray.join('\n');
+    bodyArray.push('\n');
+
+    console.log(`bodyArray: ${JSON.stringify(bodyArray, undefined, 2)}`);
+    return  `\n\n${bodyArray.join('')}`;
 }
 
 function getJiraLinkFromString({string}) {
