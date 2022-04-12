@@ -110,5 +110,5 @@ function getJiraLinkFromString({string}) {
 }
 
 function getJiras(string){
-    string.match(/https:\/\/logichub.atlassian.net\/browse\/allset-\d+/g) || [];
+    return string.match(/https:\/\/logichub.atlassian.net\/browse\/allset-\d+/g) || [];
 }
