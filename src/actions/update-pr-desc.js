@@ -3,8 +3,8 @@ const github = require('@actions/github');
 
 const {getCommitMessages} = require('../utils/commit-messsages');
 const BODY_STRING = {
-    EPIC: '>Jira epic link:',
-    BUG: '>Jira story/bug link:'
+    EPIC: 'Jira epic link:',
+    BUG: 'Jira story/bug link:'
 }
 
 export async function updatePrDesc() {
@@ -84,18 +84,18 @@ function getJiraMarkdown(items = [], jiraSection = '') {
         }
     });
 
-    bodyArray.push(`${BODY_STRING.EPIC}\n`);
+    bodyArray.push(`> ${BODY_STRING.EPIC}\n`);
     if(featureJiras.length > 0) {
         featureJiras.forEach(featureJira => {
-            bodyArray.push(`>- ${featureJira}`);
+            bodyArray.push(`> - ${featureJira}`);
         });
         bodyArray.push('\n');
     }
 
-    bodyArray.push(`${BODY_STRING.BUG}\n`);
+    bodyArray.push(`> ${BODY_STRING.BUG}\n`);
     if(bugJiras.length > 0) {
         bugJiras.forEach(bugJira => {
-            bodyArray.push(`>- ${bugJira}`);
+            bodyArray.push(`> - ${bugJira}`);
         });
         bodyArray.push('\n');
     }
