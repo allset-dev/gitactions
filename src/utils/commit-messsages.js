@@ -1,5 +1,9 @@
 import { graphql } from '@octokit/graphql';
 
+import { REPO_OWNER, REPO_NAME, PULL_REQUEST, GITHUB_TOKEN } from './get-inputs';
+
+const { number: pullRequestNumber } = PULL_REQUEST;
+
 const QUERY = `
   query commitMessages(
     $repositoryOwner: String!
@@ -23,16 +27,14 @@ const QUERY = `
   }
 `;
 
-export async function getCommitMessages(props) {
-  const { repositoryOwner, repositoryName, pullRequestNumber, token } = props;
-
+export async function getCommitMessages() {
   const variables = {
     baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
-    repositoryOwner,
-    repositoryName,
+    repositoryOwner: REPO_OWNER,
+    repositoryName: REPO_NAME,
     pullRequestNumber,
     headers: {
-      authorization: `token ${token}`,
+      authorization: `token ${GITHUB_TOKEN}`,
     },
   };
 

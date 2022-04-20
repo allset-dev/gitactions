@@ -1,20 +1,20 @@
 import core from '@actions/core';
 
-import { updatePrDesc } from './actions/update-pr-desc';
-import { checkPrTitle } from './actions/check-pr-title';
+import { updatePR } from './actions/update-pr';
+import { checkPR } from './actions/check-pr';
+
+import { CHECK } from './utils/get-inputs';
 
 function run() {
   try {
-    const CHECK = core.getInput('CHECK', { required: true });
-
     switch (CHECK) {
-      case 'title': {
-        checkPrTitle();
+      case 'checkPR': {
+        checkPR();
         break;
       }
 
-      case 'desc': {
-        updatePrDesc();
+      case 'updatePR': {
+        updatePR();
         break;
       }
 

@@ -8512,6 +8512,22 @@ var __webpack_exports__ = {};
 // ESM COMPAT FLAG
 __nccwpck_require__.r(__webpack_exports__);
 
+// NAMESPACE OBJECT: ./src/utils/get-inputs.js
+var get_inputs_namespaceObject = {};
+__nccwpck_require__.r(get_inputs_namespaceObject);
+__nccwpck_require__.d(get_inputs_namespaceObject, {
+  "hp": () => (BASE_BRANCH_NAME),
+  "qw": () => (CHECK),
+  "q3": () => (GITHUB_TOKEN),
+  "NL": () => (HEAD_BRANCH_NAME),
+  "Rq": () => (JIRA_HOST_URL),
+  "sz": () => (JIRA_PROJECT_NAME),
+  "Nc": () => (PR_BODY),
+  "rC": () => (PR_NUMBER),
+  "nG": () => (REPO_NAME),
+  "fH": () => (REPO_OWNER)
+});
+
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
 var core_default = /*#__PURE__*/__nccwpck_require__.n(core);
@@ -8520,45 +8536,69 @@ var github = __nccwpck_require__(5438);
 var github_default = /*#__PURE__*/__nccwpck_require__.n(github);
 // EXTERNAL MODULE: ./node_modules/@octokit/graphql/dist-node/index.js
 var dist_node = __nccwpck_require__(8467);
+;// CONCATENATED MODULE: ./src/utils/get-inputs.js
+
+
+
+const [REPO_OWNER = '', REPO_NAME = ''] =
+  process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
+const ISSUE_NUMBER = github.context.issue.number || '';
+
+const PULL_REQUEST = github.context.payload.pull_request || {};
+const { base, head, number, body = '' } = PULL_REQUEST;
+
+const BASE_BRANCH_NAME = base?.ref || '';
+const HEAD_BRANCH_NAME = head?.ref || '';
+const PR_NUMBER = number;
+const PR_BODY = body;
+
+const CHECK = core_default().getInput('CHECK', { required: true });
+const GITHUB_TOKEN = core_default().getInput('GITHUB_TOKEN', { required: true });
+const JIRA_HOST_URL = core_default().getInput('JIRA_HOST_URL', { required: true });
+const JIRA_PROJECT_NAME = core_default().getInput('JIRA_PROJECT_NAME', { required: true });
+
 ;// CONCATENATED MODULE: ./src/utils/commit-messsages.js
 
 
-async function getCommitMessages(props) {
-  const { repositoryOwner, repositoryName, pullRequestNumber, token } = props;
 
-  const query = `
-    query commitMessages(
-      $repositoryOwner: String!
-      $repositoryName: String!
-      $pullRequestNumber: Int!
-      $numberOfCommits: Int = 100
-    ) {
-      repository(owner: $repositoryOwner, name: $repositoryName) {
-        pullRequest(number: $pullRequestNumber) {
-          commits(last: $numberOfCommits) {
-            edges {
-              node {
-                commit {
-                  message
-                }
+
+const { number: pullRequestNumber } = get_inputs_namespaceObject.PULL_REQUEST;
+
+const QUERY = `
+  query commitMessages(
+    $repositoryOwner: String!
+    $repositoryName: String!
+    $pullRequestNumber: Int!
+    $numberOfCommits: Int = 100
+  ) {
+    repository(owner: $repositoryOwner, name: $repositoryName) {
+      pullRequest(number: $pullRequestNumber) {
+        commits(last: $numberOfCommits) {
+          edges {
+            node {
+              commit {
+                message
               }
             }
           }
         }
       }
     }
-  `;
+  }
+`;
+
+async function getCommitMessages() {
   const variables = {
     baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
-    repositoryOwner,
-    repositoryName,
+    repositoryOwner: REPO_OWNER,
+    repositoryName: REPO_NAME,
     pullRequestNumber,
     headers: {
-      authorization: `token ${token}`,
+      authorization: `token ${GITHUB_TOKEN}`,
     },
   };
 
-  const { repository } = await (0,dist_node.graphql)(query, variables);
+  const { repository } = await (0,dist_node.graphql)(QUERY, variables);
 
   let messages = [];
 
@@ -8571,12 +8611,19 @@ async function getCommitMessages(props) {
   return messages;
 }
 
-;// CONCATENATED MODULE: ./src/actions/update-pr-desc.js
+;// CONCATENATED MODULE: ./src/utils/get-octokit.js
 
 
 
 
+const octokit = github_default().getOctokit(GITHUB_TOKEN);
 
+;// CONCATENATED MODULE: ./src/utils/index.js
+
+
+
+
+;// CONCATENATED MODULE: ./src/actions/update-pr.js
 // NOTE: Test variables
 // const JIRA_HOST_URL = "https://logichub.atlassian.net";
 // const JIRA_PROJECT_NAME = "allset";
@@ -8585,14 +8632,15 @@ async function getCommitMessages(props) {
 // const headBranchName = "allset-008";
 // const commitMessages = ['asdasd'];
 
+
+
+
+
+
 const BODY_STRING = {
   EPIC: 'Jira epic link:',
   BUG: 'Jira story/bug link:',
 };
-
-const token = core_default().getInput('GITHUB_TOKEN', { required: true });
-const JIRA_HOST_URL = core_default().getInput('JIRA_HOST_URL', { required: true });
-const JIRA_PROJECT_NAME = core_default().getInput('JIRA_PROJECT_NAME', { required: true });
 
 const JIRA_BROWSE = `${JIRA_HOST_URL}/browse`;
 
@@ -8600,44 +8648,33 @@ const JIRA_PROJECT_NAME_REGEX = new RegExp(`${JIRA_PROJECT_NAME}-\\d+`, 'g');
 const GIT_BRANCH_NAME_REGEX = new RegExp(`(feature-)?${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
 const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
 
-async function updatePrDesc() {
-  const pull_request = (github_default()).context.payload.pull_request || {};
-  const { base, head, number: pull_number, body = '' } = pull_request;
-  const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
-  const baseBranchName = base?.ref || '';
-  const headBranchName = head?.ref || '';
-  const commitMessages = await getCommitMessages({
-    repositoryOwner: repoOwner,
-    repositoryName: repoName,
-    pullRequestNumber: pull_number,
-    token,
-  });
+async function updatePR() {
+  const commitMessages = await getCommitMessages();
 
-  const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
+  const itemsToCheckForJiraLink = [BASE_BRANCH_NAME, HEAD_BRANCH_NAME, ...commitMessages];
 
-  const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
+  const updatedBody = PR_BODY.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
     return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
   });
 
   console.log(`The github payload: ${JSON.stringify((github_default()), undefined, 2)}`);
-  if (body !== updatedBody) {
-    if (Boolean(body) && repoOwner && repoName && pull_number) {
-      const octokit = github_default().getOctokit(token);
-      await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
-        owner: repoOwner,
-        repo: repoName,
-        pull_number,
+  if (PR_BODY !== updatedBody) {
+    if (Boolean(PR_BODY) && REPO_OWNER && REPO_NAME && PR_NUMBER) {
+      await octokit.rest.pulls.update({
+        owner: REPO_OWNER,
+        repo: REPO_NAME,
+        pull_number: PR_NUMBER,
         body: updatedBody,
       });
     } else {
-      if (pull_number) {
+      if (PR_NUMBER) {
         core_default().setFailed(
           'Update-pr-desc: some requested parameters are empty, check above console logs.'
         );
       } else {
-        console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`);
-        console.log(`pull_number: ${pull_number}`);
-        console.log(`repo: ${repoOwner}, ${repoName}`);
+        console.log(`jiraId: ${BASE_BRANCH_NAME}, ${HEAD_BRANCH_NAME}, ${PR_BODY}`);
+        console.log(`pull_number: ${PR_NUMBER}`);
+        console.log(`repo: ${REPO_OWNER}, ${REPO_NAME}`);
 
         core_default().setFailed('Update-pr-desc action has been triggered for a non-pr action.');
       }
@@ -8701,8 +8738,15 @@ function getJiras(string) {
   return string.match(JIRA_LINK_REGEX) || [];
 }
 
-;// CONCATENATED MODULE: ./src/actions/check-pr-title.js
-async function checkPrTitle() {}
+// octokit.rest.pulls.create({
+//   owner,
+//   repo,
+//   head,
+//   base,
+// });
+
+;// CONCATENATED MODULE: ./src/actions/check-pr.js
+async function checkPR() {}
 
 ;// CONCATENATED MODULE: ./src/index.js
 
@@ -8710,18 +8754,18 @@ async function checkPrTitle() {}
 
 
 
+
+
 function run() {
   try {
-    const CHECK = core_default().getInput('CHECK', { required: true });
-
     switch (CHECK) {
-      case 'title': {
-        checkPrTitle();
+      case 'checkPR': {
+        checkPR();
         break;
       }
 
-      case 'desc': {
-        updatePrDesc();
+      case 'updatePR': {
+        updatePR();
         break;
       }
 
