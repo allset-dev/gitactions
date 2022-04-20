@@ -1,2 +1,2 @@
 # gitactions
-allset git actions
+allset git actionsasd
