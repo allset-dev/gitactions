@@ -10,10 +10,9 @@ inputs:
     required: true
   CHECK:
     required: true
-
 runs:
   using: 'node16'
-  main: dist/index.js
+  main: 'dist/index.js --experimental-modules'
 
 branding:
   icon: git-pull-request
