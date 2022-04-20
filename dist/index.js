@@ -8460,18 +8460,6 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nccwpck_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nccwpck_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -8530,10 +8518,8 @@ __nccwpck_require__.d(get_inputs_namespaceObject, {
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
-var core_default = /*#__PURE__*/__nccwpck_require__.n(core);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(5438);
-var github_default = /*#__PURE__*/__nccwpck_require__.n(github);
 // EXTERNAL MODULE: ./node_modules/@octokit/graphql/dist-node/index.js
 var dist_node = __nccwpck_require__(8467);
 ;// CONCATENATED MODULE: ./src/utils/get-inputs.js
@@ -8552,10 +8538,10 @@ const HEAD_BRANCH_NAME = head?.ref || '';
 const PR_NUMBER = number;
 const PR_BODY = body;
 
-const CHECK = core_default().getInput('CHECK', { required: true });
-const GITHUB_TOKEN = core_default().getInput('GITHUB_TOKEN', { required: true });
-const JIRA_HOST_URL = core_default().getInput('JIRA_HOST_URL', { required: true });
-const JIRA_PROJECT_NAME = core_default().getInput('JIRA_PROJECT_NAME', { required: true });
+const CHECK = core.getInput('CHECK', { required: true });
+const GITHUB_TOKEN = core.getInput('GITHUB_TOKEN', { required: true });
+const JIRA_HOST_URL = core.getInput('JIRA_HOST_URL', { required: true });
+const JIRA_PROJECT_NAME = core.getInput('JIRA_PROJECT_NAME', { required: true });
 
 ;// CONCATENATED MODULE: ./src/utils/commit-messsages.js
 
@@ -8616,7 +8602,7 @@ async function getCommitMessages() {
 
 
 
-const octokit = github_default().getOctokit(GITHUB_TOKEN);
+const octokit = github.getOctokit(GITHUB_TOKEN);
 
 ;// CONCATENATED MODULE: ./src/utils/index.js
 
@@ -8657,7 +8643,7 @@ async function updatePR() {
     return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
   });
 
-  console.log(`The github payload: ${JSON.stringify((github_default()), undefined, 2)}`);
+  console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
   if (PR_BODY !== updatedBody) {
     if (Boolean(PR_BODY) && REPO_OWNER && REPO_NAME && PR_NUMBER) {
       await octokit.rest.pulls.update({
@@ -8668,7 +8654,7 @@ async function updatePR() {
       });
     } else {
       if (PR_NUMBER) {
-        core_default().setFailed(
+        core.setFailed(
           'Update-pr-desc: some requested parameters are empty, check above console logs.'
         );
       } else {
@@ -8676,7 +8662,7 @@ async function updatePR() {
         console.log(`pull_number: ${PR_NUMBER}`);
         console.log(`repo: ${REPO_OWNER}, ${REPO_NAME}`);
 
-        core_default().setFailed('Update-pr-desc action has been triggered for a non-pr action.');
+        core.setFailed('Update-pr-desc action has been triggered for a non-pr action.');
       }
     }
   }
@@ -8770,11 +8756,11 @@ function run() {
       }
 
       default: {
-        core_default().setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
+        core.setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
       }
     }
   } catch (error) {
-    core_default().setFailed(error.message);
+    core.setFailed(error.message);
   }
 }
 

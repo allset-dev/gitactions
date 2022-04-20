@@ -6,8 +6,8 @@
 // const headBranchName = "allset-008";
 // const commitMessages = ['asdasd'];
 
-import core from '@actions/core';
-import github from '@actions/github';
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 import {
   JIRA_HOST_URL,
