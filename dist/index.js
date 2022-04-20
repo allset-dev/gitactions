@@ -8460,23 +8460,6 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__nccwpck_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
@@ -8499,22 +8482,6 @@ var __webpack_exports__ = {};
 "use strict";
 // ESM COMPAT FLAG
 __nccwpck_require__.r(__webpack_exports__);
-
-// NAMESPACE OBJECT: ./src/utils/get-inputs.js
-var get_inputs_namespaceObject = {};
-__nccwpck_require__.r(get_inputs_namespaceObject);
-__nccwpck_require__.d(get_inputs_namespaceObject, {
-  "hp": () => (BASE_BRANCH_NAME),
-  "qw": () => (CHECK),
-  "q3": () => (GITHUB_TOKEN),
-  "NL": () => (HEAD_BRANCH_NAME),
-  "Rq": () => (JIRA_HOST_URL),
-  "sz": () => (JIRA_PROJECT_NAME),
-  "Nc": () => (PR_BODY),
-  "rC": () => (PR_NUMBER),
-  "nG": () => (REPO_NAME),
-  "fH": () => (REPO_OWNER)
-});
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
@@ -8548,8 +8515,6 @@ const JIRA_PROJECT_NAME = core.getInput('JIRA_PROJECT_NAME', { required: true })
 
 
 
-const { number: pullRequestNumber } = get_inputs_namespaceObject.PULL_REQUEST;
-
 const QUERY = `
   query commitMessages(
     $repositoryOwner: String!
@@ -8578,7 +8543,7 @@ async function getCommitMessages() {
     baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
     repositoryOwner: REPO_OWNER,
     repositoryName: REPO_NAME,
-    pullRequestNumber,
+    pullRequestNumber: PR_NUMBER,
     headers: {
       authorization: `token ${GITHUB_TOKEN}`,
     },
