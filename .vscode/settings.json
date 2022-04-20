@@ -1,0 +1,27 @@
+// NOTE:(VSCODE) Availalbe vscode settings.json variables https://code.visualstudio.com/docs/editor/variables-reference.
+{
+  // NOTE:(VSCODE) On save eslint, prettier and all other configured extensions will be executed the saved file/files.
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // NOTE:(VSCODE) Refer to https://github.com/microsoft/vscode/issues/11963#issuecomment-317830768.
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/build/**": true
+  },
+  // NOTE:(TYPESCRIPT) Forcing this workspace to use local typescript from node_modules.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "eslint.options": {
+    // NOTE:(ESLINT) Adding path for eslint config files, we don't need this if config files are in root of the aplication.
+    "overrideConfigFile": "./config/.eslintrc",
+    // NOTE:(ESLINT) Adding path for eslint ignore files, we don't need this if config files are in root of the aplication.
+    "ignorePath": "./config/.eslintignore"
+  },
+  // NOTE:(PRETTIER) Adding path for prettier config files, we don't need this if config files are in root of the aplication.
+  "prettier.configPath": "./config/.prettierrc",
+  // NOTE:(PRETTIER) Adding path for prettier ignore files, we don't need this if config files are in root of the aplication.
+  "prettier.ignorePath": "./config/.prettierignore"
+}

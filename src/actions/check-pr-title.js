@@ -1,3 +1,1 @@
-export async function checkPrTitle() {
-
-}
+export async function checkPrTitle() {}

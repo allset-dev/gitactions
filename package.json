@@ -5,7 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.js --license licenses.txt",
-    "publish": "npm run build && git commit -am \"$MESSAGE\" --allow-empty && git tag -a -m \"$MESSAGE\" $VERSION && git push --follow-tags "
+    "publish": "npm run build && git commit -am \"$MESSAGE\" --allow-empty && git tag -a -m \"$MESSAGE\" $VERSION && git push --follow-tags",
+    "fix:eslint": "eslint -c config/.eslintrc --ignore-path config/.eslintignore ./ --fix",
+    "fix:prettier": "prettier --config config/.prettierrc --ignore-path config/.prettierignore --write \"./**/*.{js,jsx,json,html,scss}\"",
+    "lint": "npm run fix:prettier && npm run fix:eslint"
   },
   "repository": {
     "type": "git",
@@ -23,5 +26,9 @@
     "@actions/github": "^5.0.1",
     "@octokit/graphql": "^4.8.0",
     "@vercel/ncc": "^0.33.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.13.0",
+    "prettier": "^2.6.2"
   }
 }

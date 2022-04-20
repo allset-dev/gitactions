@@ -8299,216 +8299,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 4686:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "checkPrTitle": () => (/* binding */ checkPrTitle)
-/* harmony export */ });
-async function checkPrTitle() {
-
-}
-
-/***/ }),
-
-/***/ 7010:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "updatePrDesc": () => (/* binding */ updatePrDesc)
-/* harmony export */ });
-const core = __nccwpck_require__(2186);
-const github = __nccwpck_require__(5438);
-
-const {getCommitMessages} = __nccwpck_require__(4407);
-
-// NOTE: Test variables
-// const JIRA_HOST_URL = "https://logichub.atlassian.net";
-// const JIRA_PROJECT_NAME = "allset";
-// const body = "### Brief Overview\r\n\r\nThis PR is to create/fix ...\r\n\r\n### Jira Link\r\n\r\n> Jira epic link:\r\n\r\n> Jira story/bug link:\r\n\r\n### Design\r\n\r\n> <i>Figma link goes here</i>\r\n\r\n### Screenshots\r\n\r\n> Delete this after adding screenshots\r\n\r\n### Feature Flag\r\n\r\n- 'Name goes here'\r\n\r\n### Cherry Pick\r\n\r\n- 'Version goes here'\r\n\r\n### Coding Guidelines\r\n\r\n- [ ] Props are sorted\r\n- [ ] Order of imports : external libraries, lh alias ( lhConstant, lhComponent, lhUtil ), es6/components, bundle imports, local components / styles\r\n- [ ] Order of declaration within a component : useBundle, useDispatch, useSelector, useMemo, useState, useEffect\r\n- [ ] Line breaks are added in styling\r\n- [ ] Css / SASS variables are used in the styles\r\n- [ ] Variable / functions follow the naming convention\r\n\r\n### Tested\r\n\r\n- [ ] Add things that were tested and other action items here.\r\n"
-// const baseBranchName = "feature-allset-0008";
-// const headBranchName = "allset-008";
-// const commitMessages = ['asdasd'];
-
-const BODY_STRING = {
-    EPIC: 'Jira epic link:',
-    BUG: 'Jira story/bug link:'
-}
-
-const token = core.getInput('GITHUB_TOKEN', { required: true });
-const JIRA_HOST_URL = core.getInput('JIRA_HOST_URL', { required: true });
-const JIRA_PROJECT_NAME = core.getInput('JIRA_PROJECT_NAME', { required: true });
-
-const JIRA_BROWSE = `${JIRA_HOST_URL}/browse`;
-
-const JIRA_PROJECT_NAME_REGEX = new RegExp(`${JIRA_PROJECT_NAME}-\\d+`,'g');
-const GIT_BRANCH_NAME_REGEX = new RegExp(`(feature-)?${JIRA_PROJECT_NAME_REGEX.source}`,'g');
-const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
-
-async function updatePrDesc() {
-
-    const pull_request = github?.context?.payload?.pull_request || {};
-    const { base, head, number: pull_number, body = '' } = pull_request;
-    const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
-    const baseBranchName = base?.ref || '';
-    const headBranchName = head?.ref || '';
-    const commitMessages = await getCommitMessages({repositoryOwner: repoOwner, repositoryName: repoName, pullRequestNumber: pull_number, token});
-
-    const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
-
-    const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
-        return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
-    });
-
-    console.log(`The github payload: ${JSON.stringify(github, undefined, 2)}`);
-    if(body !== updatedBody) {
-        if(Boolean(body) && repoOwner && repoName && pull_number){
-            const octokit = github.getOctokit(token);
-            await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
-                owner: repoOwner,
-                repo: repoName,
-                pull_number,
-                body: updatedBody,
-            });
-        }else{
-            if(pull_number){
-                core.setFailed("Update-pr-desc: some requested parameters are empty, check above console logs.");
-            }else{
-                console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`)
-                console.log(`pull_number: ${pull_number}`);
-                console.log(`repo: ${repoOwner}, ${repoName}`);
-    
-                core.setFailed("Update-pr-desc action has been triggered for a non-pr action.");
-            }
-        }
-    }
-}
-
-
-function getJiraMarkdown(items = [], jiraSection = '') {
-    const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.split(BODY_STRING.BUG);
-
-    const bodyArray = [];
-    const featureJiras = getJiras(featureJirasSection)
-    const bugJiras = getJiras(bugJirasSection);
-
-    items.forEach(item => {
-        const matchedItems = item.match(GIT_BRANCH_NAME_REGEX);
-
-        if(matchedItems) {
-            matchedItems.forEach((matchedItem = '') => {
-                const jiraLink = getJiraLinkFromJiraId({string: matchedItem});
-
-                if(jiraLink) {
-                    if(!featureJiras.includes(jiraLink) && !bugJiras.includes(jiraLink)) {
-                        if(matchedItem.startsWith('feature-')) {
-                            featureJiras.push(jiraLink)
-                        }else{
-                            bugJiras.push(jiraLink)
-                        }
-                    }
-                }
-            });
-        }
-    });
-
-    bodyArray.push(`> ${BODY_STRING.EPIC}\n`);
-    if(featureJiras.length > 0) {
-        featureJiras.forEach(featureJira => {
-            bodyArray.push(`> - ${featureJira}\n`);
-        });
-    }
-    bodyArray.push('\n');
-
-    bodyArray.push(`> ${BODY_STRING.BUG}\n`);
-    if(bugJiras.length > 0) {
-        bugJiras.forEach(bugJira => {
-            bodyArray.push(`> - ${bugJira}\n`);
-        });
-    }
-    bodyArray.push('\n');
-
-    return  `\n\n${bodyArray.join('')}`;
-}
-
-function getJiraLinkFromJiraId({ string = '' }) {
-    const jiraId = string.match(JIRA_PROJECT_NAME_REGEX)?.[0] || '';
-
-    return jiraId ? `${JIRA_BROWSE}/${jiraId}`: '';
-}
-
-function getJiras(string){
-    return string.match(JIRA_LINK_REGEX) || [];
-}
-
-
-/***/ }),
-
-/***/ 4407:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "getCommitMessages": () => (/* binding */ getCommitMessages)
-/* harmony export */ });
-const {graphql} = __nccwpck_require__(8467);
-
-
-async function getCommitMessages(props) {
-    const { repositoryOwner, repositoryName, pullRequestNumber, token } = props;
-
-    const query = `
-    query commitMessages(
-      $repositoryOwner: String!
-      $repositoryName: String!
-      $pullRequestNumber: Int!
-      $numberOfCommits: Int = 100
-    ) {
-      repository(owner: $repositoryOwner, name: $repositoryName) {
-        pullRequest(number: $pullRequestNumber) {
-          commits(last: $numberOfCommits) {
-            edges {
-              node {
-                commit {
-                  message
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `
-    const variables = {
-      baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
-      repositoryOwner,
-      repositoryName,
-      pullRequestNumber,
-      headers: {
-        authorization: `token ${token}`
-      }
-    }
-    
-    const {repository} = await graphql(query, variables);
-
-    let messages = [];
-
-    if (repository.pullRequest) {
-        messages = repository.pullRequest.commits.edges.map((edge) => {
-          return edge.node.commit.message
-        });
-    }
-    
-    return messages;
-}
-
-/***/ }),
-
 /***/ 2877:
 /***/ ((module) => {
 
@@ -8670,6 +8460,18 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -8704,38 +8506,236 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
-const core = __nccwpck_require__(2186);
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
 
-const {updatePrDesc} = __nccwpck_require__(7010);
-const {checkPrTitle} = __nccwpck_require__(4686);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+var core_default = /*#__PURE__*/__nccwpck_require__.n(core);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
+var github_default = /*#__PURE__*/__nccwpck_require__.n(github);
+// EXTERNAL MODULE: ./node_modules/@octokit/graphql/dist-node/index.js
+var dist_node = __nccwpck_require__(8467);
+;// CONCATENATED MODULE: ./src/utils/commit-messsages.js
 
-function run (){
-    try {
-        const check = core.getInput('CHECK', { required: true });
 
-        switch(check){
-            case 'title': {
-                checkPrTitle();
-                break;
+async function getCommitMessages(props) {
+  const { repositoryOwner, repositoryName, pullRequestNumber, token } = props;
+
+  const query = `
+    query commitMessages(
+      $repositoryOwner: String!
+      $repositoryName: String!
+      $pullRequestNumber: Int!
+      $numberOfCommits: Int = 100
+    ) {
+      repository(owner: $repositoryOwner, name: $repositoryName) {
+        pullRequest(number: $pullRequestNumber) {
+          commits(last: $numberOfCommits) {
+            edges {
+              node {
+                commit {
+                  message
+                }
+              }
             }
-
-            case 'desc': {
-                updatePrDesc();
-                break;
-            }
-
-            default: {
-                core.setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
-            }
+          }
         }
-    } catch (error) {
-        core.setFailed(error.message);
+      }
     }
+  `;
+  const variables = {
+    baseUrl: process.env['GITHUB_API_URL'] || 'https://api.github.com',
+    repositoryOwner,
+    repositoryName,
+    pullRequestNumber,
+    headers: {
+      authorization: `token ${token}`,
+    },
+  };
+
+  const { repository } = await (0,dist_node.graphql)(query, variables);
+
+  let messages = [];
+
+  if (repository.pullRequest) {
+    messages = repository.pullRequest.commits.edges.map((edge) => {
+      return edge.node.commit.message;
+    });
+  }
+
+  return messages;
+}
+
+;// CONCATENATED MODULE: ./src/actions/update-pr-desc.js
+
+
+
+
+
+// NOTE: Test variables
+// const JIRA_HOST_URL = "https://logichub.atlassian.net";
+// const JIRA_PROJECT_NAME = "allset";
+// const body = "### Brief Overview\r\n\r\nThis PR is to create/fix ...\r\n\r\n### Jira Link\r\n\r\n> Jira epic link:\r\n\r\n> Jira story/bug link:\r\n\r\n### Design\r\n\r\n> <i>Figma link goes here</i>\r\n\r\n### Screenshots\r\n\r\n> Delete this after adding screenshots\r\n\r\n### Feature Flag\r\n\r\n- 'Name goes here'\r\n\r\n### Cherry Pick\r\n\r\n- 'Version goes here'\r\n\r\n### Coding Guidelines\r\n\r\n- [ ] Props are sorted\r\n- [ ] Order of imports : external libraries, lh alias ( lhConstant, lhComponent, lhUtil ), es6/components, bundle imports, local components / styles\r\n- [ ] Order of declaration within a component : useBundle, useDispatch, useSelector, useMemo, useState, useEffect\r\n- [ ] Line breaks are added in styling\r\n- [ ] Css / SASS variables are used in the styles\r\n- [ ] Variable / functions follow the naming convention\r\n\r\n### Tested\r\n\r\n- [ ] Add things that were tested and other action items here.\r\n"
+// const baseBranchName = "feature-allset-0008";
+// const headBranchName = "allset-008";
+// const commitMessages = ['asdasd'];
+
+const BODY_STRING = {
+  EPIC: 'Jira epic link:',
+  BUG: 'Jira story/bug link:',
+};
+
+const token = core_default().getInput('GITHUB_TOKEN', { required: true });
+const JIRA_HOST_URL = core_default().getInput('JIRA_HOST_URL', { required: true });
+const JIRA_PROJECT_NAME = core_default().getInput('JIRA_PROJECT_NAME', { required: true });
+
+const JIRA_BROWSE = `${JIRA_HOST_URL}/browse`;
+
+const JIRA_PROJECT_NAME_REGEX = new RegExp(`${JIRA_PROJECT_NAME}-\\d+`, 'g');
+const GIT_BRANCH_NAME_REGEX = new RegExp(`(feature-)?${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
+const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.source}`, 'g');
+
+async function updatePrDesc() {
+  const pull_request = (github_default()).context.payload.pull_request || {};
+  const { base, head, number: pull_number, body = '' } = pull_request;
+  const [repoOwner = '', repoName = ''] = process?.env?.GITHUB_REPOSITORY?.split?.('/') || [];
+  const baseBranchName = base?.ref || '';
+  const headBranchName = head?.ref || '';
+  const commitMessages = await getCommitMessages({
+    repositoryOwner: repoOwner,
+    repositoryName: repoName,
+    pullRequestNumber: pull_number,
+    token,
+  });
+
+  const itemsToCheckForJiraLink = [baseBranchName, headBranchName, ...commitMessages];
+
+  const updatedBody = body.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
+    return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
+  });
+
+  console.log(`The github payload: ${JSON.stringify((github_default()), undefined, 2)}`);
+  if (body !== updatedBody) {
+    if (Boolean(body) && repoOwner && repoName && pull_number) {
+      const octokit = github_default().getOctokit(token);
+      await octokit.request(`PATCH /repos/${repoOwner}/${repoName}/pulls/${pull_number}`, {
+        owner: repoOwner,
+        repo: repoName,
+        pull_number,
+        body: updatedBody,
+      });
+    } else {
+      if (pull_number) {
+        core_default().setFailed(
+          'Update-pr-desc: some requested parameters are empty, check above console logs.'
+        );
+      } else {
+        console.log(`jiraId: ${baseBranchName}, ${headBranchName}, ${body}`);
+        console.log(`pull_number: ${pull_number}`);
+        console.log(`repo: ${repoOwner}, ${repoName}`);
+
+        core_default().setFailed('Update-pr-desc action has been triggered for a non-pr action.');
+      }
+    }
+  }
+}
+
+function getJiraMarkdown(items = [], jiraSection = '') {
+  const [featureJirasSection = '', bugJirasSection = ''] = jiraSection.split(BODY_STRING.BUG);
+
+  const bodyArray = [];
+  const featureJiras = getJiras(featureJirasSection);
+  const bugJiras = getJiras(bugJirasSection);
+
+  items.forEach((item) => {
+    const matchedItems = item.match(GIT_BRANCH_NAME_REGEX);
+
+    if (matchedItems) {
+      matchedItems.forEach((matchedItem = '') => {
+        const jiraLink = getJiraLinkFromJiraId({ string: matchedItem });
+
+        if (jiraLink) {
+          if (!featureJiras.includes(jiraLink) && !bugJiras.includes(jiraLink)) {
+            if (matchedItem.startsWith('feature-')) {
+              featureJiras.push(jiraLink);
+            } else {
+              bugJiras.push(jiraLink);
+            }
+          }
+        }
+      });
+    }
+  });
+
+  bodyArray.push(`> ${BODY_STRING.EPIC}\n`);
+  if (featureJiras.length > 0) {
+    featureJiras.forEach((featureJira) => {
+      bodyArray.push(`> - ${featureJira}\n`);
+    });
+  }
+  bodyArray.push('\n');
+
+  bodyArray.push(`> ${BODY_STRING.BUG}\n`);
+  if (bugJiras.length > 0) {
+    bugJiras.forEach((bugJira) => {
+      bodyArray.push(`> - ${bugJira}\n`);
+    });
+  }
+  bodyArray.push('\n');
+
+  return `\n\n${bodyArray.join('')}`;
+}
+
+function getJiraLinkFromJiraId({ string = '' }) {
+  const jiraId = string.match(JIRA_PROJECT_NAME_REGEX)?.[0] || '';
+
+  return jiraId ? `${JIRA_BROWSE}/${jiraId}` : '';
+}
+
+function getJiras(string) {
+  return string.match(JIRA_LINK_REGEX) || [];
+}
+
+;// CONCATENATED MODULE: ./src/actions/check-pr-title.js
+async function checkPrTitle() {}
+
+;// CONCATENATED MODULE: ./src/index.js
+
+
+
+
+
+function run() {
+  try {
+    const CHECK = core_default().getInput('CHECK', { required: true });
+
+    switch (CHECK) {
+      case 'title': {
+        checkPrTitle();
+        break;
+      }
+
+      case 'desc': {
+        updatePrDesc();
+        break;
+      }
+
+      default: {
+        core_default().setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
+      }
+    }
+  } catch (error) {
+    core_default().setFailed(error.message);
+  }
 }
 
 run();
+
 })();
 
 module.exports = __webpack_exports__;

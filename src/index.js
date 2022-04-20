@@ -1,30 +1,30 @@
-const core = require('@actions/core');
+import core from '@actions/core';
 
-const {updatePrDesc} = require('./actions/update-pr-desc');
-const {checkPrTitle} = require('./actions/check-pr-title');
+import { updatePrDesc } from './actions/update-pr-desc';
+import { checkPrTitle } from './actions/check-pr-title';
 
-function run (){
-    try {
-        const check = core.getInput('CHECK', { required: true });
+function run() {
+  try {
+    const CHECK = core.getInput('CHECK', { required: true });
 
-        switch(check){
-            case 'title': {
-                checkPrTitle();
-                break;
-            }
+    switch (CHECK) {
+      case 'title': {
+        checkPrTitle();
+        break;
+      }
 
-            case 'desc': {
-                updatePrDesc();
-                break;
-            }
+      case 'desc': {
+        updatePrDesc();
+        break;
+      }
 
-            default: {
-                core.setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
-            }
-        }
-    } catch (error) {
-        core.setFailed(error.message);
+      default: {
+        core.setFailed(`Provided CHECK: ${CHECK}. Does not exist.`);
+      }
     }
+  } catch (error) {
+    core.setFailed(error.message);
+  }
 }
 
 run();
