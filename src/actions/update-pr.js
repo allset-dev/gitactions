@@ -36,7 +36,7 @@ const JIRA_LINK_REGEX = new RegExp(`${JIRA_BROWSE}/${JIRA_PROJECT_NAME_REGEX.sou
 export async function updatePR() {
   const commitMessages = await getCommitMessages();
 
-  const itemsToCheckForJiraLink = [BASE_BRANCH_NAME, HEAD_BRANCH_NAME, ...commitMessages];
+  const itemsToCheckForJiraLink = [HEAD_BRANCH_NAME, ...commitMessages];
 
   const updatedBody = PR_BODY.replace(/(?<=### Jira Link)(.*)(?=### Design)/gs, (jiraSection) => {
     return getJiraMarkdown(itemsToCheckForJiraLink, jiraSection);
